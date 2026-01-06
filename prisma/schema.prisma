@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id        String      @id @default(auto()) @map("_id") @db.ObjectId
+  username  String      @unique(map: "username")
+  password  String
+  fullname  String
+  role      Role        @default(USER)
+  userPlant userPlant[]
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+model userPlant {
+  id                String          @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  imageUrl          String
+  care_instructions String?
+  water_frequency   Int
+  sunlight          String?
+  soilType          String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @default(now())
+  userId            String          @db.ObjectId
+  plantBaseId       String?         @db.ObjectId
+  user              user            @relation(fields: [userId], references: [id])
+  base              plantBase?      @relation(fields: [plantBaseId], references: [id])
+  plantProgress     plantProgress[]
+}
+
+model plantBase {
+  id                String      @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  latinName         String
+  water_frequency   Int?
+  imageUrl          String?
+  sunlight          String?
+  soilType          String?
+  care_instructions String?
+  isVerifed         Boolean     @default(false)
+  generateBy        String      @default("USER")
+  userPlant         userPlant[]
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @default(now())
+}
+
+model plantProgress {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  userPlantId  String      @db.ObjectId
+  imageUrl     String
+  notes        String?
+  progressType String? // e.g. watering, new_leaf, blooming
+  growthStage  String? // e.g. seedling, growing, flowering
+  condition    String? // e.g. healthy, wilted, pest_detected
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  userPlant userPlant @relation(fields: [userPlantId], references: [id])
+}
