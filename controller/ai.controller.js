@@ -1,7 +1,7 @@
 import GenerateTextfromImage from "../services/gemini.services.js";
-import { getImageUrl } from "../services/uploadImage.service.js";
+// import { getImageUrl } from "../services/uploadImage.service.js";
 export const generateAi = async (req, res) => {
-  const image = getImageUrl(req.file);
+  // const image = getImageUrl(req.file);
 
   // console.log(imgUrl);
   console.log(req.file);

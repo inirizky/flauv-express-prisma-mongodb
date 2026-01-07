@@ -1,9 +1,7 @@
 import { supabase } from "../lib/supabase.js";
 
-export const uploadImage = async (req, res) => {
+export const uploadImage = async (file) => {
   try {
-    const file = req.file;
-
     if (!file) {
       return res.status(400).json({ message: "File tidak ditemukan" });
     }
@@ -21,12 +19,12 @@ export const uploadImage = async (req, res) => {
 
     const { data } = supabase.storage.from("assets").getPublicUrl(fileName);
 
-    return res.json({
-      message: "Upload berhasil",
-      url: data.publicUrl,
-    });
+    console.log(data);
+
+    return {
+      imageUrl: data.publicUrl,
+    };
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Upload gagal" });
+    throw new Error("Error uploading image to Supabase: " + err.message);
   }
 };

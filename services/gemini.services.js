@@ -3,14 +3,17 @@ import * as fs from "node:fs";
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API });
 
-export default async function GenerateTextfromImage(filePath, prompt) {
-  const base64ImageFile = fs.readFileSync(filePath, { encoding: "base64" });
-
+export default async function GenerateTextfromImage(
+  imageBuffer,
+  imageUrl,
+  prompt
+) {
+  const base64Image = imageBuffer.toString("base64");
   const contents = [
     {
       inlineData: {
         mimeType: "image/jpeg",
-        data: base64ImageFile,
+        data: base64Image,
       },
     },
 
@@ -39,8 +42,6 @@ export default async function GenerateTextfromImage(filePath, prompt) {
     }
 
     // console.log(filePath);/
-
-    const imageUrl = `/${filePath}`;
 
     return {
       data: { ...parsed, imageUrl },

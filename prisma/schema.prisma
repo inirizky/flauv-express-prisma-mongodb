@@ -24,6 +24,7 @@ enum Role {
 model userPlant {
   id                String          @id @default(auto()) @map("_id") @db.ObjectId
   name              String
+  latinName         String?
   imageUrl          String
   care_instructions String?
   water_frequency   Int
@@ -55,15 +56,15 @@ model plantBase {
 }
 
 model plantProgress {
-  id           String      @id @default(auto()) @map("_id") @db.ObjectId
-  userPlantId  String      @db.ObjectId
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userPlantId  String   @db.ObjectId
   imageUrl     String
   notes        String?
   progressType String? // e.g. watering, new_leaf, blooming
   growthStage  String? // e.g. seedling, growing, flowering
   condition    String? // e.g. healthy, wilted, pest_detected
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   userPlant userPlant @relation(fields: [userPlantId], references: [id])
 }

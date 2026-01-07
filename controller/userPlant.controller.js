@@ -1,16 +1,15 @@
 import express from "express";
-import { getImageUrl } from "../services/uploadImage.service.js";
 import GenerateTextfromImage from "../services/gemini.services.js";
 import { prisma } from "../lib/prisma.js";
-import { uploadImage } from "./upload.contoller.js";
+import { uploadImage } from "../services/uploadSupabase.js";
 
 export const generateUserPlantByAI = async (req, res) => {
-  const image = uploadImage(req.file);
+  const file = req.file;
+  if (!file) {
+    return res.status(400).json({ message: "File is required" });
+  }
 
-  // console.log(imgUrl);
-  console.log(req.file);
-
-  // const imagePath = path.resolve(imgUrl);
+  const { imageUrl } = await uploadImage(file);
 
   try {
     const prompt = `
@@ -34,7 +33,11 @@ Rules:
 - The value of "sunlight" and "soilType" must be same as the example given
 
 `;
-    const aiDescription = await GenerateTextfromImage(image, prompt);
+    const aiDescription = await GenerateTextfromImage(
+      file.buffer,
+      imageUrl,
+      prompt
+    );
 
     const search = aiDescription.data.name.toLowerCase();
     const keywords = search.split(" ").filter(Boolean); // buang spasi kosong
@@ -58,7 +61,7 @@ Rules:
           latinName: aiDescription.data.latinName,
           water_frequency: aiDescription.data.water_frequency,
           sunlight: aiDescription.data.sunlight,
-          imageUrl: aiDescription.data.imageUrl,
+          imageUrl: imageUrl,
           soilType: aiDescription.data.soilType,
           care_instructions: aiDescription.data.care_instructions,
           generateBy: "AI",
@@ -87,6 +90,7 @@ export const createUserPlant = async (req, res) => {
   const {
     name,
     imageUrl,
+    latinName,
     water_frequency,
     soilType,
     sunlight,
@@ -98,8 +102,9 @@ export const createUserPlant = async (req, res) => {
     await prisma.userPlant.create({
       data: {
         name,
+        latinName,
         imageUrl,
-        water_frequency: parseInt(water_frequency),
+        water_frequency: water_frequency,
         soilType,
         sunlight,
         care_instructions,
@@ -124,7 +129,7 @@ export const readUserPlantById = async (req, res) => {
   try {
     const userPlant = await prisma.userPlant.findUnique({
       where: {
-        id: parseInt(id),
+        id: id,
         userId: req.user.id,
       },
       include: {
@@ -178,7 +183,7 @@ export const editUserPlantById = async (req, res) => {
   try {
     const userPlant = await prisma.userPlant.update({
       where: {
-        id: parseInt(id),
+        id: id,
         userId: req.user.id,
       },
       data: {
@@ -202,7 +207,7 @@ export const deleteUserPlant = async (req, res) => {
   try {
     await prisma.userPlant.delete({
       where: {
-        id: parseInt(id),
+        id: id,
         userId: req.user.id,
       },
     });

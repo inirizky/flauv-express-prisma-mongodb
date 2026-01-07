@@ -1,19 +1,17 @@
 import GenerateTextfromImage from "../services/gemini.services.js";
-import { getImageUrl } from "../services/uploadImage.service.js";
 import { prisma } from "../lib/prisma.js";
+import { uploadImage } from "../services/uploadSupabase.js";
 
 export const createPlantProgress = async (req, res) => {
   const { name, progress, notes, plantId } = req.body;
 
   try {
-    if (!req.file) {
-      return res.status(400).json({
-        message: "No image uploaded",
-        status: 400,
-      });
+    const file = req.file;
+    if (!file) {
+      return res.status(400).json({ message: "File is required" });
     }
 
-    const image = getImageUrl(req.file);
+    const { imageUrl } = await uploadImage(file);
 
     console.log("name", name);
     console.log("Progress", progress);
@@ -48,7 +46,11 @@ OUTPUT (JSON ONLY):
 }
 `;
 
-    const aiDescription = await GenerateTextfromImage(image, prompt);
+    const aiDescription = await GenerateTextfromImage(
+      file.buffer,
+      imageUrl,
+      prompt
+    );
 
     await prisma.plantProgress.create({
       data: {
@@ -57,7 +59,7 @@ OUTPUT (JSON ONLY):
         condition: aiDescription.data.condition,
         growthStage: aiDescription.data.growthStage,
         progressType: aiDescription.data.progressType,
-        userPlantId: parseInt(plantId),
+        userPlantId: plantId,
       },
     });
 
@@ -111,7 +113,7 @@ export const readPlantProgressById = async (req, res) => {
   try {
     const userPlant = await await prisma.plantProgress.findMany({
       where: {
-        userPlantId: parseInt(id),
+        userPlantId: id,
         userPlant: {
           userId: req.user.id, // ✅ Filter lewat relasi
         },
