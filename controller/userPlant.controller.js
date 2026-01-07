@@ -2,9 +2,10 @@ import express from "express";
 import { getImageUrl } from "../services/uploadImage.service.js";
 import GenerateTextfromImage from "../services/gemini.services.js";
 import { prisma } from "../lib/prisma.js";
+import { uploadImage } from "./upload.contoller.js";
 
 export const generateUserPlantByAI = async (req, res) => {
-  const image = getImageUrl(req.file);
+  const image = uploadImage(req.file);
 
   // console.log(imgUrl);
   console.log(req.file);

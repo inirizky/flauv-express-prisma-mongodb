@@ -1,22 +1,32 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { supabase } from "../lib/supabase.js";
 
 export const uploadImage = async (req, res) => {
   try {
-    const { name } = req.body;
-    const imgUrl = `assets/${req.file.filename}`;
+    const file = req.file;
 
-    const product = await prisma.product.create({
-      data: { name, imgUrl },
-    });
+    if (!file) {
+      return res.status(400).json({ message: "File tidak ditemukan" });
+    }
 
-    res.status(201).json({
-      message: "Upload berhasil!",
-      data: product,
+    const fileName = `assets/${Date.now()}-${file.originalname}`;
+
+    const { error } = await supabase.storage
+      .from("assets") // nama bucket
+      .upload(fileName, file.buffer, {
+        contentType: file.mimetype,
+        upsert: false,
+      });
+
+    if (error) throw error;
+
+    const { data } = supabase.storage.from("assets").getPublicUrl(fileName);
+
+    return res.json({
+      message: "Upload berhasil",
+      url: data.publicUrl,
     });
-  } catch (error) {
-    console.error("Upload gagal:", error);
-    res.status(500).json({ message: "Upload gagal!" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Upload gagal" });
   }
 };
